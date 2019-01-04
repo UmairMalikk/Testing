@@ -5,9 +5,11 @@ const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
+const passport = require("passport");
+const flash = require("connect-flash");
 
 const dbPath = require("./config/config").mongoURI;
-
+const user = require("./routes/User");
 const app = express();
 const port = process.env.port || 8000;
 
@@ -22,6 +24,8 @@ mongoose.connect(
   }
 );
 
+require("./config/passport")(passport);
+
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(
@@ -32,14 +36,20 @@ app.use(
   })
 );
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use("view engine", "ejs");
+app.use(bodyParser.json());
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(flash());
 
-app.use("/", (req, res) => {
-  res.send("hello");
-  console.log(req.cookies);
-  console.log("=======================");
-  console.log(req.session);
-});
+app.set("view engine", "ejs");
+
+require("./routes/User.js")(app, passport);
+// app.use("/", (req, res) => {
+//   res.send("hello");
+//   console.log(req.cookies);
+//   console.log("=======================");
+//   console.log(req.session);
+// });
 
 app.listen(port, err => {
   if (err) {
